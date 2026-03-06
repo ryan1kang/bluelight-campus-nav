@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlueLight — Campus Safety Navigation</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css?v=10" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Persistent map ── -->
+  <div id="map"></div>
+
+  <!-- ── Map zoom controls ── -->
+  <div class="map-zoom" id="map-zoom-controls">
+    <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+    <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       VIEW 1 · Start / Search
+  ══════════════════════════════════════════ -->
+  <div class="view active" id="v-start">
+
+    <div class="statusbar">
+      <span id="clock">9:41 AM</span>
+      <div class="statusbar-icons">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="4" width="2" height="8" rx="1"/><rect x="4" y="2.5" width="2" height="9.5" rx="1"/><rect x="8" y="1" width="2" height="11" rx="1"/><rect x="12" y="0" width="2" height="12" rx="1"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 3C5.2 3 2.7 4.1 0.9 5.9L0 5l1.8-1.8C3.9 1.2 5.8 0 8 0s4.1 1.2 6.2 3.2L16 5l-.9.9C13.3 4.1 10.8 3 8 3z"/><path d="M8 7c-1.1 0-2.1.4-2.8 1.1L4 7l.7-.7C5.7 5.5 6.8 5 8 5s2.3.5 3.3 1.3l.7.7-1.2 1.1C10.1 7.4 9.1 7 8 7z"/><circle cx="8" cy="10" r="2"/></svg>
+        <svg width="22" height="12" viewBox="0 0 22 12" fill="currentColor"><rect x="0" y="1" width="17" height="10" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="1.5" y="2.5" width="12" height="7" rx="1"/><rect x="18" y="4" width="3" height="4" rx="1"/></svg>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-container">
+      <div class="search-bar" id="search-bar">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#72788a" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#72788a" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <input id="search-input" type="text" placeholder="Where to?" autocomplete="off" spellcheck="false" />
+        <button class="search-clear" id="search-clear" hidden>✕</button>
+      </div>
+      <div class="search-results" id="search-results" hidden></div>
+    </div>
+
+    <!-- Quick destinations -->
+    <div class="quick-dests" id="quick-dests">
+      <p class="quick-label">Nearby destinations</p>
+      <div class="quick-chips" id="quick-chips">
+        <button class="dest-chip" data-dest="regenstein">📍 Regenstein Library</button>
+        <button class="dest-chip" data-dest="crerar">📍 Crerar Library</button>
+        <button class="dest-chip" data-dest="ida">📍 Ida Noyes Hall</button>
+        <button class="dest-chip" data-dest="cobb">📍 Cobb Hall</button>
+        <button class="dest-chip" data-dest="mansueto">📍 Mansueto Library</button>
+        <button class="dest-chip" data-dest="ratner">📍 Ratner Athletics</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-dot bluelight-dot"></span>
+      <span class="legend-label">Blue Light Emergency Phones (click for info)</span>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       VIEW 2 · Route Selection
+  ══════════════════════════════════════════ -->
+  <div class="view" id="v-routes">
+
+    <div class="left-panel">
+      <button class="back-btn" id="back-routes">
+        <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M7 1L1 7L7 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back
+      </button>
+
+      <div class="trip-header">
+        <div class="trip-row">
+          <span class="trip-dot origin"></span>
+          <span class="trip-label">Current Location</span>
+        </div>
+        <div class="trip-line"></div>
+        <div class="trip-row">
+          <span class="trip-dot dest-dot"></span>
+          <span class="trip-label dest-name" id="dest-label">Regenstein Library</span>
+        </div>
+      </div>
+
+      <div class="transport-tabs">
+        <button class="tab active" data-mode="walk">
+          <svg width="13" height="15" viewBox="0 0 13 15" fill="currentColor"><circle cx="6.5" cy="1.5" r="1.5"/><path d="M4.5 5.5h4l1.5 4.5-2.5-.5v4H5v-4L2.5 10 4.5 5.5z"/></svg>
+          Walk
+        </button>
+        <button class="tab" data-mode="bike">
+          <svg width="16" height="13" viewBox="0 0 16 13" fill="none"><circle cx="3" cy="10" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="13" cy="10" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 10L7.5 3.5 13 10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 3.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Bike
+        </button>
+        <button class="tab" data-mode="transit">
+          <svg width="16" height="13" viewBox="0 0 16 13" fill="none"><rect x="1" y="1" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 6h14" stroke="currentColor" stroke-width="1"/><circle cx="4" cy="11.5" r="1" fill="currentColor"/><circle cx="12" cy="11.5" r="1" fill="currentColor"/><path d="M4 10v2M12 10v2" stroke="currentColor" stroke-width="1"/></svg>
+          Transit
+        </button>
+      </div>
+
+      <!-- Rev 1: Route cards -->
+      <div class="route-cards" id="route-cards"></div>
+
+      <!-- Rev 4: Safety explanation -->
+      <div class="safety-explainer">
+        <div class="explainer-body open" id="explainer-body">
+          <div class="factor-row">
+            <span class="factor-dot" style="background:#34c759"></span>
+            <span class="factor-text">Blue Light phone proximity</span>
+            <span class="factor-badge" style="color:#34c759;background:rgba(52,199,89,.15)">High</span>
+          </div>
+          <div class="factor-row">
+            <span class="factor-dot" style="background:#ffd60a"></span>
+            <span class="factor-text">Street lighting coverage</span>
+            <span class="factor-badge" style="color:#ffd60a;background:rgba(255,214,10,.15)">Medium</span>
+          </div>
+          <div class="factor-row">
+            <span class="factor-dot" style="background:#34c759"></span>
+            <span class="factor-text">Open buildings along route</span>
+            <span class="factor-badge" style="color:#34c759;background:rgba(52,199,89,.15)">High</span>
+          </div>
+          <p class="factor-note">Scores update in real time as conditions change.</p>
+        </div>
+      </div>
+
+      <button class="start-nav-btn" id="start-nav-btn">
+        Start Navigation
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Rev 2: Building chip -->
+    <div class="building-chip" id="bchip-routes" title="Click for details">
+      <img class="bchip-photo" id="bchip-routes-photo" alt="" style="display:none" onerror="this.style.display='none'">
+      <div class="bchip-inner">
+        <div class="bchip-status open-dot"></div>
+        <div class="bchip-body">
+          <div class="bchip-name" id="bchip-routes-name">Regenstein Library</div>
+          <div class="bchip-hours open-text" id="bchip-routes-hours">Open until 10:00 PM</div>
+          <div class="bchip-access id-card" id="bchip-routes-access">🪪 ID Card Entry</div>
+          <div class="bchip-expanded" id="bchip-routes-expanded" hidden>
+            <div class="bchip-detail-row">📞 Campus Security: (773) 702-8181</div>
+            <div class="bchip-detail-row">🚻 Restrooms available</div>
+            <div class="bchip-detail-row">♿ Accessible entrance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       VIEW 3 · Active Navigation
+  ══════════════════════════════════════════ -->
+  <div class="view" id="v-nav">
+
+    <!-- Minimal nav float bar -->
+    <div class="nav-float">
+      <button class="end-btn" id="end-nav-btn">✕ End Navigation</button>
+      <div class="nav-float-progress">
+        <div class="nav-float-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <span class="nav-float-dist" id="eta-dist">0.6 mi remaining</span>
+      </div>
+    </div>
+
+    <!-- Hidden stubs required by JS -->
+    <div style="display:none">
+      <span id="eta-time"></span>
+      <span id="nav-score-num"></span>
+      <span id="step-counter"></span>
+      <div id="nav-arrow"></div>
+      <div id="nav-street"></div>
+      <div id="nav-detail"></div>
+      <button id="prev-step"></button>
+      <button id="next-step"></button>
+      <button id="report-btn"></button>
+      <button id="call-btn"></button>
+      <button id="nav-score-pill"><span id="nav-score-pill-num"></span></button>
+    </div>
+
+    <!-- Rev 2: Building chip -->
+    <div class="building-chip" id="bchip-nav" title="Click for details">
+      <img class="bchip-photo" id="bchip-nav-photo" alt="" style="display:none" onerror="this.style.display='none'">
+      <div class="bchip-inner">
+        <div class="bchip-status open-dot"></div>
+        <div class="bchip-body">
+          <div class="bchip-name" id="bchip-nav-name">Regenstein Library</div>
+          <div class="bchip-hours open-text" id="bchip-nav-hours">Open until 10:00 PM</div>
+          <div class="bchip-access id-card" id="bchip-nav-access">🪪 ID Card Entry</div>
+          <div class="bchip-expanded" id="bchip-nav-expanded" hidden>
+            <div class="bchip-detail-row">📞 Campus Security: (773) 702-8181</div>
+            <div class="bchip-detail-row">🚻 Restrooms available</div>
+            <div class="bchip-detail-row">♿ Accessible entrance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rev 3: Via banner -->
+    <div class="via-banner">
+      <div class="via-icon-box">VIA</div>
+      <div class="via-text">
+        <div class="via-title">Via Campus Transit Available Nearby</div>
+        <div class="via-sub">Next pickup ~5 min &nbsp;·&nbsp; Active daily after 5:00 PM</div>
+      </div>
+      <button class="via-request" id="via-request-btn">Request</button>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       Safety Score Modal
+  ══════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="safety-modal" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <span>Safety Score Breakdown</span>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-score-hero">
+        <div class="modal-score-num" id="modal-score-num">94</div>
+        <div class="modal-score-label">Route Safety Score</div>
+      </div>
+      <div class="modal-factors">
+        <div class="modal-factor">
+          <div class="mf-icon" style="background:rgba(52,199,89,.2);color:#34c759">🔵</div>
+          <div class="mf-body">
+            <div class="mf-name">Blue Light Phone Proximity</div>
+            <div class="mf-bar-track"><div class="mf-bar" style="width:90%;background:#34c759"></div></div>
+          </div>
+          <span class="mf-val" style="color:#34c759">High</span>
+        </div>
+        <div class="modal-factor">
+          <div class="mf-icon" style="background:rgba(255,214,10,.2);color:#ffd60a">💡</div>
+          <div class="mf-body">
+            <div class="mf-name">Street Lighting Coverage</div>
+            <div class="mf-bar-track"><div class="mf-bar" style="width:65%;background:#ffd60a"></div></div>
+          </div>
+          <span class="mf-val" style="color:#ffd60a">Med</span>
+        </div>
+        <div class="modal-factor">
+          <div class="mf-icon" style="background:rgba(52,199,89,.2);color:#34c759">🏢</div>
+          <div class="mf-body">
+            <div class="mf-name">Open Buildings Along Route</div>
+            <div class="mf-bar-track"><div class="mf-bar" style="width:85%;background:#34c759"></div></div>
+          </div>
+          <span class="mf-val" style="color:#34c759">High</span>
+        </div>
+      </div>
+      <p class="modal-note">Scores update in real time as conditions change on campus.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       Emergency Modal
+  ══════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="emergency-modal" hidden>
+    <div class="modal emergency-modal-box">
+      <div class="modal-header">
+        <span>🚨 Emergency</span>
+        <button class="modal-close" id="emergency-modal-close">✕</button>
+      </div>
+      <p class="emergency-intro">Select an emergency option. UCPD responds 24/7 on campus.</p>
+      <div class="emergency-options">
+        <button class="emergency-option" id="call-ucpd-btn">
+          <div class="eo-icon" style="background:rgba(52,120,246,0.2);color:#6ca8ff">📞</div>
+          <div class="eo-text">
+            <div class="eo-title">Call UCPD</div>
+            <div class="eo-sub">(773) 702-8181 · UChicago Police</div>
+          </div>
+        </button>
+        <button class="emergency-option" id="nav-bluelight-btn">
+          <div class="eo-icon" style="background:rgba(0,122,255,0.2);color:#007aff">🔵</div>
+          <div class="eo-text">
+            <div class="eo-title">Nearest Blue Light Phone</div>
+            <div class="eo-sub" id="nearest-bl-info">BL-002 · Midway Plaisance · ~80 ft</div>
+          </div>
+        </button>
+        <button class="emergency-option" id="call-911-btn">
+          <div class="eo-icon" style="background:rgba(255,68,58,0.2);color:#ff453a">🆘</div>
+          <div class="eo-text">
+            <div class="eo-title">Call 911</div>
+            <div class="eo-sub">Chicago Emergency Services</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Floating buttons (outside all views, always in DOM) ── -->
+  <button class="float-btn float-via" id="float-via-btn">
+    <span class="float-btn-icon">🚐</span>
+    <span>Via Transit</span>
+  </button>
+  <button class="float-btn float-emergency" id="float-emergency-btn">
+    <span class="float-btn-icon">🚨</span>
+    <span>Emergency</span>
+  </button>
+  <button class="float-btn float-hazard" id="float-hazard-btn">
+    <span class="float-btn-icon">⚠</span>
+    <span>Report Hazard</span>
+  </button>
+
+  <!-- ── Toast ── -->
+  <div class="toast" id="toast"></div>
+
+</div><!-- #app -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js?v=15"></script>
+</body>
+</html>
