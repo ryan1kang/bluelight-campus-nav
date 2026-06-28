@@ -233,6 +233,7 @@ function toast(msg, duration = 3000) {
 function showView(id) {
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
   document.getElementById(id).classList.add("active");
+  document.getElementById("app").dataset.view = id;   // drives per-view layout (FAB rail height, etc.)
   state.view = id;
 
   function showFloat(elId, show) {
@@ -369,13 +370,13 @@ function drawRoutes() {
 
 function fitRoutes() {
   const coords = Object.values(state.routes).flatMap((r) => r.coords);
-  // paddingTopLeft: [left, top] — leave room for the 420px left panel
-  // paddingBottomRight: [right, bottom]
-  // maxZoom: never zoom in past 15 so both endpoints stay visible
+  // Keep the whole route visible in the map band between the top search
+  // bar and the bottom route sheet (~56% of the map height on mobile).
+  const sz = map.getSize();
   map.fitBounds(L.latLngBounds(coords), {
-    paddingTopLeft:     [450, 60],
-    paddingBottomRight: [60,  80],
-    maxZoom: 15,
+    paddingTopLeft:     [28, 130],
+    paddingBottomRight: [28, Math.round(sz.y * 0.56)],
+    maxZoom: 16,
     animate: true,
     duration: 0.6,
   });
@@ -588,11 +589,12 @@ function goToNav() {
       }
     });
 
-    // Zoom to selected route (no left panel in nav view)
+    // Zoom to selected route (top nav banner + bottom via banner)
     const coords = state.routes[state.routeMode].coords;
     map.fitBounds(L.latLngBounds(coords), {
-      padding: [80, 80],
-      maxZoom: 15,
+      paddingTopLeft:     [40, 100],
+      paddingBottomRight: [40, 170],
+      maxZoom: 16,
       animate: true,
       duration: 0.7,
     });
