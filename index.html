@@ -2,13 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d0f14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>BlueLight — Campus Safety Navigation</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=21" />
 </head>
 <body>
-<div id="app">
+<div id="app" data-view="v-start">
 
   <!-- ── Persistent map ── -->
   <div id="map"></div>
@@ -33,7 +36,7 @@
       </div>
     </div>
 
-    <!-- Search bar -->
+    <!-- Search bar (pinned top) -->
     <div class="search-container">
       <div class="search-bar" id="search-bar">
         <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#72788a" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#72788a" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -43,22 +46,24 @@
       <div class="search-results" id="search-results" hidden></div>
     </div>
 
-    <!-- Quick destinations -->
-    <div class="quick-dests" id="quick-dests">
-      <p class="quick-label">Nearby destinations</p>
-      <div class="quick-chips" id="quick-chips">
-        <button class="dest-chip" data-dest="regenstein">📍 Regenstein Library</button>
-        <button class="dest-chip" data-dest="crerar">📍 Crerar Library</button>
-        <button class="dest-chip" data-dest="ida">📍 Ida Noyes Hall</button>
-        <button class="dest-chip" data-dest="cobb">📍 Cobb Hall</button>
-        <button class="dest-chip" data-dest="mansueto">📍 Mansueto Library</button>
-        <button class="dest-chip" data-dest="ratner">📍 Ratner Athletics</button>
+    <!-- Bottom sheet: quick destinations + legend -->
+    <div class="sheet start-sheet">
+      <div class="sheet-handle"></div>
+      <div class="quick-dests" id="quick-dests">
+        <p class="quick-label">Nearby destinations</p>
+        <div class="quick-chips" id="quick-chips">
+          <button class="dest-chip" data-dest="regenstein">📍 Regenstein Library</button>
+          <button class="dest-chip" data-dest="crerar">📍 Crerar Library</button>
+          <button class="dest-chip" data-dest="ida">📍 Ida Noyes Hall</button>
+          <button class="dest-chip" data-dest="cobb">📍 Cobb Hall</button>
+          <button class="dest-chip" data-dest="mansueto">📍 Mansueto Library</button>
+          <button class="dest-chip" data-dest="ratner">📍 Ratner Athletics</button>
+        </div>
       </div>
-    </div>
-
-    <div class="legend">
-      <span class="legend-dot bluelight-dot"></span>
-      <span class="legend-label">Blue Light Emergency Phones (click for info)</span>
+      <div class="legend">
+        <span class="legend-dot bluelight-dot"></span>
+        <span class="legend-label">Blue Light Emergency Phones — tap a marker for info</span>
+      </div>
     </div>
 
   </div>
@@ -68,7 +73,28 @@
   ══════════════════════════════════════════ -->
   <div class="view" id="v-routes">
 
+    <!-- Building chip -->
+    <div class="building-chip" id="bchip-routes" title="Tap for details">
+      <img class="bchip-photo" id="bchip-routes-photo" alt="" style="display:none" onerror="this.style.display='none'">
+      <div class="bchip-inner">
+        <div class="bchip-status open-dot"></div>
+        <div class="bchip-body">
+          <div class="bchip-name" id="bchip-routes-name">Regenstein Library</div>
+          <div class="bchip-hours open-text" id="bchip-routes-hours">Open until 10:00 PM</div>
+          <div class="bchip-access id-card" id="bchip-routes-access">🪪 ID Card Entry</div>
+          <div class="bchip-expanded" id="bchip-routes-expanded" hidden>
+            <div class="bchip-detail-row">📞 Campus Security: (773) 702-8181</div>
+            <div class="bchip-detail-row">🚻 Restrooms available</div>
+            <div class="bchip-detail-row">♿ Accessible entrance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom sheet: route selection -->
     <div class="left-panel">
+      <div class="sheet-handle"></div>
+
       <button class="back-btn" id="back-routes">
         <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M7 1L1 7L7 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Back
@@ -101,10 +127,8 @@
         </button>
       </div>
 
-      <!-- Rev 1: Route cards -->
       <div class="route-cards" id="route-cards"></div>
 
-      <!-- Rev 4: Safety explanation -->
       <div class="safety-explainer">
         <div class="explainer-body open" id="explainer-body">
           <div class="factor-row">
@@ -132,24 +156,6 @@
       </button>
     </div>
 
-    <!-- Rev 2: Building chip -->
-    <div class="building-chip" id="bchip-routes" title="Click for details">
-      <img class="bchip-photo" id="bchip-routes-photo" alt="" style="display:none" onerror="this.style.display='none'">
-      <div class="bchip-inner">
-        <div class="bchip-status open-dot"></div>
-        <div class="bchip-body">
-          <div class="bchip-name" id="bchip-routes-name">Regenstein Library</div>
-          <div class="bchip-hours open-text" id="bchip-routes-hours">Open until 10:00 PM</div>
-          <div class="bchip-access id-card" id="bchip-routes-access">🪪 ID Card Entry</div>
-          <div class="bchip-expanded" id="bchip-routes-expanded" hidden>
-            <div class="bchip-detail-row">📞 Campus Security: (773) 702-8181</div>
-            <div class="bchip-detail-row">🚻 Restrooms available</div>
-            <div class="bchip-detail-row">♿ Accessible entrance</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -157,9 +163,9 @@
   ══════════════════════════════════════════ -->
   <div class="view" id="v-nav">
 
-    <!-- Minimal nav float bar -->
+    <!-- Top nav banner -->
     <div class="nav-float">
-      <button class="end-btn" id="end-nav-btn">✕ End Navigation</button>
+      <button class="end-btn" id="end-nav-btn">✕ End</button>
       <div class="nav-float-progress">
         <div class="nav-float-track">
           <div class="progress-fill" id="progress-fill"></div>
@@ -183,8 +189,8 @@
       <button id="nav-score-pill"><span id="nav-score-pill-num"></span></button>
     </div>
 
-    <!-- Rev 2: Building chip -->
-    <div class="building-chip" id="bchip-nav" title="Click for details">
+    <!-- Building chip -->
+    <div class="building-chip" id="bchip-nav" title="Tap for details">
       <img class="bchip-photo" id="bchip-nav-photo" alt="" style="display:none" onerror="this.style.display='none'">
       <div class="bchip-inner">
         <div class="bchip-status open-dot"></div>
@@ -201,12 +207,12 @@
       </div>
     </div>
 
-    <!-- Rev 3: Via banner -->
+    <!-- Via banner (bottom sheet) -->
     <div class="via-banner">
       <div class="via-icon-box">VIA</div>
       <div class="via-text">
-        <div class="via-title">Via Campus Transit Available Nearby</div>
-        <div class="via-sub">Next pickup ~5 min &nbsp;·&nbsp; Active daily after 5:00 PM</div>
+        <div class="via-title">Via Campus Transit nearby</div>
+        <div class="via-sub">Next pickup ~5 min · Daily after 5:00 PM</div>
       </div>
       <button class="via-request" id="via-request-btn">Request</button>
     </div>
@@ -292,19 +298,21 @@
     </div>
   </div>
 
-  <!-- ── Floating buttons (outside all views, always in DOM) ── -->
-  <button class="float-btn float-via" id="float-via-btn">
-    <span class="float-btn-icon">🚐</span>
-    <span>Via Transit</span>
-  </button>
-  <button class="float-btn float-emergency" id="float-emergency-btn">
-    <span class="float-btn-icon">🚨</span>
-    <span>Emergency</span>
-  </button>
-  <button class="float-btn float-hazard" id="float-hazard-btn">
-    <span class="float-btn-icon">⚠</span>
-    <span>Report Hazard</span>
-  </button>
+  <!-- ── Floating action buttons — single right-side rail ── -->
+  <div class="fab-rail" id="fab-rail">
+    <button class="float-btn float-via" id="float-via-btn">
+      <span class="float-btn-icon">🚐</span>
+      <span>Via Transit</span>
+    </button>
+    <button class="float-btn float-hazard" id="float-hazard-btn">
+      <span class="float-btn-icon">⚠</span>
+      <span>Report Hazard</span>
+    </button>
+    <button class="float-btn float-emergency" id="float-emergency-btn">
+      <span class="float-btn-icon">🚨</span>
+      <span>Emergency</span>
+    </button>
+  </div>
 
   <!-- ── Toast ── -->
   <div class="toast" id="toast"></div>
@@ -312,6 +320,7 @@
 </div><!-- #app -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=15"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>
+
